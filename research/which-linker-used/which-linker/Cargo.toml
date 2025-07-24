@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 
 [profile.dev]
-debug = 0
+debug = false
 
 [profile.release]
 lto = true
