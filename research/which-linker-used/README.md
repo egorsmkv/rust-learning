@@ -18,6 +18,10 @@ Compiling which-linker v0.1.0 (/Users/yehorsmoliakov/Downloads/rust-learning/res
 
 Check:
 
+```
+readelf  -p .comment target/debug/which-linker
+```
+
 Specify own linker:
 
 ```
