@@ -1,0 +1,5 @@
+check:
+    cargo clippy -- -W clippy::pedantic
+
+build:
+    cargo build --release
