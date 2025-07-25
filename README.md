@@ -1,6 +1,6 @@
-# rust-learning
+<img src="./logo-smaller.png" alt="Rust" width="300">
 
-My learning notes about Rust
+# My learning notes about Rust
 
 Quick actions:
 

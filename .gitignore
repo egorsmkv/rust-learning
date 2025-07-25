@@ -1,1 +1,5 @@
 target/
+
+materials/
+
+.DS_Store
