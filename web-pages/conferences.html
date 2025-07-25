@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Rust Conference Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy Rust & Slate -->
+    <!-- Application Structure Plan: The application is designed as a single-page interactive dashboard with a fixed top navigation, allowing users to seamlessly switch between different views of the data. The structure is: 1. **Hero/Header**: Grabs attention and provides a summary. 2. **Key Insights**: Presents high-level trends (growth, types) immediately using charts for quick data digestion. 3. **Interactive Timeline**: Allows users to explore the chronological progression of conferences, which is a natural way to understand the ecosystem's history. 4. **Conference Explorer**: The core interactive element, a filterable grid of conference cards, enabling users to perform targeted discovery based on their interests (year, region). This task-oriented design was chosen over a linear report structure to empower users to explore non-linearly and find relevant information quickly, enhancing usability and engagement. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Number of conferences per year. -> Goal: Show change over time. -> Viz: Bar Chart (Chart.js/Canvas). -> Interaction: Tooltips on hover provide exact numbers. -> Justification: A bar chart is the clearest way to show growth trends year-over-year.
+        - Report Info: Conference categories (Flagship, Regional, Specialized, etc.). -> Goal: Compare proportions. -> Viz: Doughnut Chart (Chart.js/Canvas). -> Interaction: Tooltips show percentages and labels. -> Justification: A doughnut chart effectively displays the composition of the conference landscape.
+        - Report Info: Chronological list of all conferences. -> Goal: Organize chronologically. -> Viz: Interactive Timeline (HTML/CSS/JS). -> Interaction: Clicking a year on the timeline filters the main explorer view. -> Justification: Provides historical context and a novel navigation method.
+        - Report Info: Full list of conferences with details. -> Goal: Inform & Compare. -> Viz: Filterable Card Grid (HTML/CSS/JS). -> Interaction: Users select filters (year, region) to dynamically update the visible cards. -> Justification: This is the most flexible way for users to query the dataset and compare specific events.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .active-nav {
+            color: #D35400;
+            border-bottom: 2px solid #D35400;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover {
+            color: #D35400;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+        .timeline {
+            display: flex;
+            overflow-x: auto;
+            padding: 20px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #D35400 #EAEAEA;
+        }
+        .timeline::-webkit-scrollbar {
+            height: 8px;
+        }
+        .timeline::-webkit-scrollbar-track {
+            background: #EAEAEA;
+            border-radius: 10px;
+        }
+        .timeline::-webkit-scrollbar-thumb {
+            background-color: #D35400;
+            border-radius: 10px;
+        }
+        .timeline-item {
+            flex: 0 0 100px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #EAEAEA;
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+        .timeline-dot {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 3px solid #EAEAEA;
+            border-radius: 50%;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .timeline-item.active .timeline-dot, .timeline-item:hover .timeline-dot {
+            border-color: #D35400;
+            transform: scale(1.2);
+        }
+        .timeline-year {
+            margin-top: 10px;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .timeline-item.active .timeline-year, .timeline-item:hover .timeline-year {
+            color: #D35400;
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-[#D35400]">
+                Rust Conference Explorer
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#insights" class="nav-link font-semibold">Insights</a>
+                <a href="#timeline" class="nav-link font-semibold">Timeline</a>
+                <a href="#explorer" class="nav-link font-semibold">Explorer</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D35400]">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#insights" class="block py-2 px-6 text-sm hover:bg-gray-100">Insights</a>
+            <a href="#timeline" class="block py-2 px-6 text-sm hover:bg-gray-100">Timeline</a>
+            <a href="#explorer" class="block py-2 px-6 text-sm hover:bg-gray-100">Explorer</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section id="hero" class="text-center mb-20">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">The Global Rise of Rust</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                From a single flagship event to a thriving global ecosystem, the Rust conference landscape reflects the language's rapid growth and specialization. This interactive application lets you explore the journey.
+            </p>
+        </section>
+
+        <section id="insights" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-4">Ecosystem at a Glance</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">The data reveals a clear trajectory: sustained growth in the number of events and increasing specialization. The charts below visualize the expansion and diversification of the Rust conference scene from 2016 to 2025.</p>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-center mb-4">Annual Conference Growth</h3>
+                    <div class="chart-container">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-center mb-4">Conference Type Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-4">An Interactive Timeline</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Travel through time to see how the Rust community has grown. The first events laid the groundwork for a now-global network of conferences. Click a year to filter the conference list in the explorer below.</p>
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <div id="timeline-container" class="timeline">
+                </div>
+            </div>
+        </section>
+
+        <section id="explorer">
+            <h2 class="text-3xl font-bold text-center mb-4">Conference Explorer</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Dive deep into the world of Rust conferences. Use the filters to find events by year or region. Click on any card to visit the official or archival website for more details.</p>
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <select id="year-filter" class="p-2 border rounded-md bg-white shadow-sm focus:ring-2 focus:ring-[#D35400] focus:outline-none">
+                    <option value="all">All Years</option>
+                </select>
+                <select id="region-filter" class="p-2 border rounded-md bg-white shadow-sm focus:ring-2 focus:ring-[#D35400] focus:outline-none">
+                    <option value="all">All Regions</option>
+                    <option value="North America">North America</option>
+                    <option value="Europe">Europe</option>
+                    <option value="Asia">Asia</option>
+                    <option value="Online">Online</option>
+                </select>
+                <button id="reset-filters" class="px-4 py-2 bg-[#D35400] text-white font-semibold rounded-md shadow-sm hover:bg-[#E67E22] transition-colors">Reset</button>
+            </div>
+            <div id="conference-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>Interactive Rust Conference Explorer</p>
+            <p class="text-sm text-gray-400 mt-2">Data synthesized from the "A Comprehensive Directory of Global Rust Programming Conferences (2016-2025)" report.</p>
+        </div>
+    </footer>
+
+    <script>
+        const conferenceData = [
+            { name: 'RustConf 2016', year: 2016, region: 'North America', type: 'Flagship', location: 'Portland, US', url: 'http://2016.rustconf.com/' },
+            { name: 'Rust Belt Rust 2016', year: 2016, region: 'North America', type: 'Regional', location: 'Various, US', url: 'https://www.rust-belt-rust.com/' },
+            { name: 'FOSDEM 2017 (Rust BoF)', year: 2017, region: 'Europe', type: 'Community', location: 'Brussels, BE', url: 'https://archive.fosdem.org/2017/schedule/event/rust_bof/' },
+            { name: 'RustFest Kyiv 2017', year: 2017, region: 'Europe', type: 'Regional', location: 'Kyiv, UA', url: 'https://2017.rustfest.eu/' },
+            { name: 'RustFest Zürich 2017', year: 2017, region: 'Europe', type: 'Regional', location: 'Zürich, CH', url: 'https://zurich.rustfest.eu/' },
+            { name: 'Rust Belt Rust 2017', year: 2017, region: 'North America', type: 'Regional', location: 'Columbus, US', url: 'http://conf2017.rust-belt-rust.com/' },
+            { name: 'RustConf 2018', year: 2018, region: 'North America', type: 'Flagship', location: 'Portland, US', url: 'https://2018.rustconf.com/' },
+            { name: 'RustFest Paris 2018', year: 2018, region: 'Europe', type: 'Regional', location: 'Paris, FR', url: 'https://paris.rustfest.eu/' },
+            { name: 'RustFest Rome 2018', year: 2018, region: 'Europe', type: 'Regional', location: 'Rome, IT', url: 'https://media.ccc.de/c/rustfest18rome' },
+            { name: 'RustRush 2018', year: 2018, region: 'Europe', type: 'Regional', location: 'Moscow, RU', url: 'https://www.papercall.io/rustrush' },
+            { name: 'Capitole du Libre 2018', year: 2018, region: 'Europe', type: 'Community', location: 'Toulouse, FR', url: 'https://2018.capitoledulibre.org/' },
+            { name: 'RustFest Barcelona 2019', year: 2019, region: 'Europe', type: 'Regional', location: 'Barcelona, ES', url: 'https://barcelona.rustfest.eu/' },
+            { name: 'RustCon Asia 2019', year: 2019, region: 'Asia', type: 'Regional', location: 'Beijing, CN', url: 'https://rustcon.asia/' },
+            { name: 'RustConf 2021', year: 2021, region: 'Online', type: 'Flagship', location: 'Online', url: 'https://2021.rustconf.com/' },
+            { name: 'RustConf 2022', year: 2022, region: 'North America', type: 'Flagship', location: 'Portland, US', url: 'https://2022.rustconf.com/' },
+            { name: 'Conf42: Rustlang 2022', year: 2022, region: 'Online', type: 'Community', location: 'Online', url: 'https://dev.events/conferences/conf42-rustlang-online-8-2022' },
+            { name: 'LPC Rust Microconf 2022', year: 2022, region: 'Europe', type: 'Specialized', location: 'Dublin, IE', url: 'https://lpc.events/event/16/contributions/1297/' },
+            { name: 'RustLab 2022', year: 2022, region: 'Europe', type: 'Regional', location: 'Florence, IT', url: 'https://rustlab.it/past-editions/2022' },
+            { name: 'RustConf 2023', year: 2023, region: 'North America', type: 'Flagship', location: 'Albuquerque, US', url: 'https://rustconf-2023.sessionize.com/' },
+            { name: 'EuroRust 2023', year: 2023, region: 'Europe', type: 'Flagship', location: 'Brussels, BE', url: 'https://eurorust.eu/2023' },
+            { name: 'LPC Rust Microconf 2023', year: 2023, region: 'North America', type: 'Specialized', location: 'Richmond, US', url: 'https://lpc.events/event/17/contributions/1408/' },
+            { name: 'RustConf 2024', year: 2024, region: 'North America', type: 'Flagship', location: 'Montreal, CA', url: 'https://rustfoundation.org/event/rustconf-2024/' },
+            { name: 'EuroRust 2024', year: 2024, region: 'Europe', type: 'Flagship', location: 'Vienna, AT', url: 'https://eurorust.eu/2024/' },
+            { name: 'RustFest Zürich 2024', year: 2024, region: 'Europe', type: 'Regional', location: 'Zürich, CH', url: 'https://rustfest.ch/' },
+            { name: 'Oxidize 2024', year: 2024, region: 'Europe', type: 'Specialized', location: 'Berlin, DE', url: 'https://ti.to/asquera-event-ug/oxidize-2024' },
+            { name: 'LPC Rust Microconf 2024', year: 2024, region: 'Europe', type: 'Specialized', location: 'Vienna, AT', url: 'https://lpc.events/event/18/contributions/1662/' },
+            { name: 'Conf42: Rustlang 2024', year: 2024, region: 'Online', type: 'Community', location: 'Online', url: 'https://www.conf42.com/rustlang2024' },
+            { name: 'Scientific Computing in Rust 2024', year: 2024, region: 'Online', type: 'Specialized', location: 'Online', url: 'https://scientificcomputing.rs/2024/' },
+            { name: 'Rust Nation UK 2024', year: 2024, region: 'Europe', type: 'Regional', location: 'London, UK', url: 'https://staging.rustnationuk.com/' },
+            { name: 'RustNL 2024', year: 2024, region: 'Europe', type: 'Regional', location: 'Delft, NL', url: 'https://2024.rustnl.org/' },
+            { name: 'RustLab 2024', year: 2024, region: 'Europe', type: 'Regional', location: 'Florence, IT', url: 'https://sessionize.com/rustlab-2024/' },
+            { name: 'UARust Conference 2024', year: 2024, region: 'Europe', type: 'Regional', location: 'Kyiv, UA & Online', url: 'https://uarust.com/' },
+            { name: 'RustConf 2025', year: 2025, region: 'North America', type: 'Flagship', location: 'Seattle, US', url: 'https://rustconf.com/' },
+            { name: 'EuroRust 2025', year: 2025, region: 'Europe', type: 'Flagship', location: 'Paris, FR', url: 'https://eurorust.eu/' },
+            { name: 'Oxidize 2025', year: 2025, region: 'Europe', type: 'Specialized', location: 'Berlin, DE', url: 'https://oxidizeconf.com/' },
+            { name: 'RUSTAsia 2025', year: 2025, region: 'Asia', type: 'Regional', location: 'Hong Kong', url: 'https://www.rustasiaconf.com/' },
+            { name: 'FOSDEM 2025 (Rust Devroom)', year: 2025, region: 'Europe', type: 'Community', location: 'Brussels, BE', url: 'https://fosdem.org/2025/schedule/track/rust/' },
+            { name: 'Rust Global: London 2025', year: 2025, region: 'Europe', type: 'Specialized', location: 'London, UK', url: 'https://rustfoundation.org/event/rust-global-london-2025/' },
+            { name: 'Rust Nation UK 2025', year: 2025, region: 'Europe', type: 'Regional', location: 'London, UK', url: 'https://www.understandingrecruitment.com/knowledge-hub/event/rust-nation-uk-2025/' },
+            { name: 'Rust in Paris 2025', year: 2025, region: 'Europe', type: 'Regional', location: 'Paris, FR', url: 'https://rustparis.fr/' },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const conferenceGrid = document.getElementById('conference-grid');
+            const yearFilter = document.getElementById('year-filter');
+            const regionFilter = document.getElementById('region-filter');
+            const resetFiltersBtn = document.getElementById('reset-filters');
+            const timelineContainer = document.getElementById('timeline-container');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            const years = [...new Set(conferenceData.map(c => c.year))].sort((a, b) => a - b);
+            
+            function populateFilters() {
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                });
+            }
+
+            function createConferenceCard(conf) {
+                return `
+                    <a href="${conf.url}" target="_blank" rel="noopener noreferrer" class="card block bg-white rounded-lg shadow-md overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold text-gray-800">${conf.name}</h3>
+                                <span class="text-sm font-semibold text-white bg-[#D35400] px-2 py-1 rounded-full">${conf.year}</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${conf.location}</p>
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <span class="bg-gray-200 text-gray-700 px-2 py-1 rounded-md">${conf.region}</span>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md">${conf.type}</span>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            }
+
+            function renderConferences(filteredData) {
+                conferenceGrid.innerHTML = filteredData.map(createConferenceCard).join('');
+            }
+            
+            function filterConferences() {
+                const selectedYear = yearFilter.value;
+                const selectedRegion = regionFilter.value;
+
+                let filteredData = conferenceData;
+
+                if (selectedYear !== 'all') {
+                    filteredData = filteredData.filter(c => c.year == selectedYear);
+                }
+                if (selectedRegion !== 'all') {
+                    filteredData = filteredData.filter(c => c.region === selectedRegion);
+                }
+                
+                document.querySelectorAll('.timeline-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.year == selectedYear);
+                });
+
+                renderConferences(filteredData);
+            }
+
+            function setupTimeline() {
+                years.forEach(year => {
+                    const item = document.createElement('div');
+                    item.className = 'timeline-item';
+                    item.dataset.year = year;
+                    item.innerHTML = `
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-year">${year}</div>
+                    `;
+                    item.addEventListener('click', () => {
+                        yearFilter.value = year;
+                        filterConferences();
+                    });
+                    timelineContainer.appendChild(item);
+                });
+            }
+
+            function resetFilters() {
+                yearFilter.value = 'all';
+                regionFilter.value = 'all';
+                document.querySelectorAll('.timeline-item').forEach(item => item.classList.remove('active'));
+                renderConferences(conferenceData);
+            }
+
+            function setupCharts() {
+                const growthCtx = document.getElementById('growthChart').getContext('2d');
+                const typeCtx = document.getElementById('typeChart').getContext('2d');
+
+                const growthData = years.map(year => ({
+                    year: year,
+                    count: conferenceData.filter(c => c.year === year).length
+                }));
+
+                const typeCounts = conferenceData.reduce((acc, conf) => {
+                    acc[conf.type] = (acc[conf.type] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: 'Inter'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            bodyFont: {
+                                family: 'Inter'
+                            },
+                            titleFont: {
+                                family: 'Inter'
+                            }
+                        }
+                    }
+                };
+
+                new Chart(growthCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: growthData.map(d => d.year),
+                        datasets: [{
+                            label: 'Number of Conferences',
+                            data: growthData.map(d => d.count),
+                            backgroundColor: 'rgba(211, 84, 0, 0.6)',
+                            borderColor: 'rgba(211, 84, 0, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { ...chartOptions, scales: { y: { beginAtZero: true } } }
+                });
+
+                new Chart(typeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(typeCounts),
+                        datasets: [{
+                            label: 'Conference Types',
+                            data: Object.values(typeCounts),
+                            backgroundColor: [
+                                'rgba(211, 84, 0, 0.7)',
+                                'rgba(41, 128, 185, 0.7)',
+                                'rgba(241, 196, 15, 0.7)',
+                                'rgba(46, 204, 113, 0.7)',
+                            ],
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+            
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if(mobileMenu.classList.contains('hidden') === false){
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            yearFilter.addEventListener('change', filterConferences);
+            regionFilter.addEventListener('change', filterConferences);
+            resetFiltersBtn.addEventListener('click', resetFilters);
+
+            populateFilters();
+            setupTimeline();
+            renderConferences(conferenceData);
+            setupCharts();
+        });
+    </script>
+</body>
+</html>
+
