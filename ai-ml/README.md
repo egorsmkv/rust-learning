@@ -1,5 +1,7 @@
 AI/ML projects in Rust
 
+List: https://github.com/e-tornike/best-of-ml-rust
+
 Inference, Training:
 
 - [ ] NVIDIA Dynamo
