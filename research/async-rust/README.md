@@ -1,6 +1,6 @@
 # Async Rust
 
-Runtimes & crates:
+Runtimes & Crates:
 
 - tokio
 - mio
@@ -11,13 +11,19 @@ Runtimes & crates:
 - glommio (io_uring)
 - futures
 - async-trait
+- https://github.com/willothy/whirlwind
+
+Books:
 
 - https://rust-lang.github.io/async-book/intro.html
-- https://corrode.dev/blog/async/
 
-- https://github.com/willothy/whirlwind
+Articles:
+
+- https://corrode.dev/blog/async/
 - https://interrupt.memfault.com/blog/embedded-async-rust
 - https://github.com/alexpusch/rust-magic-patterns/tree/master/visual-journey-through-async-rust
-- https://areweasyncyet.rs/
 
+Other:
+
+- https://areweasyncyet.rs/
 - https://rust-lang.zulipchat.com/#narrow/channel/187312-wg-async
