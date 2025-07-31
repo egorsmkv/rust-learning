@@ -17,3 +17,9 @@ rustup default nightly
 rustup default stable
 ```
 
+2. Install and Use nightly rustfmt:
+
+```
+rustup component add rustfmt --toolchain nightly
+cargo +nightly fmt
+```
