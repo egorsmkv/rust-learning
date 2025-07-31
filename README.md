@@ -4,10 +4,16 @@
 
 Quick actions:
 
-0. Use nightly using rustup:
+0. Install and Use nightly:
 
 ```
 rustup toolchain install nightly
 rustup default nightly
+```
+
+1. Use stable:
+
+```
+rustup default stable
 ```
 
