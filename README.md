@@ -27,6 +27,6 @@ cargo +nightly fmt
 2. Install and Use nightly `clippy`:
 
 ```
-rustup component add rustfmt --toolchain clippy
+rustup component add clippy --toolchain nightly
 cargo +nightly clippy -- -W clippy::pedantic
 ```
