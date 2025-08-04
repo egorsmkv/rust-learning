@@ -24,7 +24,7 @@ rustup component add rustfmt --toolchain nightly
 cargo +nightly fmt
 ```
 
-2. Install and Use nightly `clippy`:
+3. Install and Use nightly `clippy`:
 
 ```
 rustup component add clippy --toolchain nightly
