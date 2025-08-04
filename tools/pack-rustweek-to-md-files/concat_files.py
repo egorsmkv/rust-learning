@@ -1,4 +1,44 @@
+import os
 from pathlib import Path
+
+
+def rename_markdown_to_md(folder_path):
+    """
+    Renames all files with the .markdown extension to .md in a specified folder.
+
+    Args:
+        folder_path (str): The absolute or relative path to the folder
+                           containing the files to be renamed.
+    """
+    if not os.path.isdir(folder_path):
+        print(
+            f"Error: The folder '{folder_path}' does not exist or is not a directory."
+        )
+        print("Please check the path and try again.")
+        return
+
+    print(f"Scanning folder: {folder_path}\n")
+    renamed_count = 0
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".markdown"):
+            old_file_path = os.path.join(folder_path, filename)
+
+            base_name, _ = os.path.splitext(filename)
+            new_filename = base_name + ".md"
+            new_file_path = os.path.join(folder_path, new_filename)
+
+            try:
+                os.rename(old_file_path, new_file_path)
+                print(f"Renamed: '{filename}' -> '{new_filename}'")
+                renamed_count += 1
+            except OSError as e:
+                print(f"Error renaming file {filename}: {e}")
+
+    if renamed_count == 0:
+        print("No files with the .markdown extension were found to rename.")
+    else:
+        print(f"\nFinished. Renamed {renamed_count} file(s).")
 
 
 def concatenate_md_files(source_dir: str, dest_dir: str, chunk_size: int = 10):
@@ -42,8 +82,9 @@ def concatenate_md_files(source_dir: str, dest_dir: str, chunk_size: int = 10):
 
 
 if __name__ == "__main__":
-    SOURCE_FOLDER = "/Users/yehorsmoliakov/Downloads/rust-learning/materials/this-week-in-rust/content"
-    DESTINATION_FOLDER = "/Users/yehorsmoliakov/Downloads/rust-learning/materials/this-week-in-rust/content-out"
+    SOURCE_FOLDER = "./this-week-in-rust/content"
+    DESTINATION_FOLDER = "./this-week-in-rust/content-out"
     FILES_PER_CHUNK = 10
 
+    rename_markdown_to_md(SOURCE_FOLDER)
     concatenate_md_files(SOURCE_FOLDER, DESTINATION_FOLDER, FILES_PER_CHUNK)
