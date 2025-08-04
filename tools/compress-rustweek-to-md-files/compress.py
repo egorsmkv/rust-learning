@@ -1,7 +1,7 @@
 """
 git clone https://github.com/rust-lang/this-week-in-rust.git
 
-python3 concat_files.py
+python3 compress.py
 """
 
 import os
