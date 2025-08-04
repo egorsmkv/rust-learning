@@ -32,6 +32,7 @@ Inference, Training:
 - [ ] https://github.com/Lagrange-Labs/deep-prove 
 - [ ] https://github.com/EmbarkStudios/rust-gpu
 - [ ] https://github.com/araxnoid-code/ROTTA-rs
+- [ ] https://github.com/liquidos-ai/AutoAgents
 
 Gateway:
 
