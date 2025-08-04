@@ -1,3 +1,9 @@
+"""
+git clone https://github.com/rust-lang/this-week-in-rust.git
+
+python3 concat_files.py
+"""
+
 import os
 from pathlib import Path
 
@@ -83,7 +89,7 @@ def concatenate_md_files(source_dir: str, dest_dir: str, chunk_size: int = 10):
 
 if __name__ == "__main__":
     SOURCE_FOLDER = "./this-week-in-rust/content"
-    DESTINATION_FOLDER = "./this-week-in-rust/content-out"
+    DESTINATION_FOLDER = "./this-week-in-rust-compressed"
     FILES_PER_CHUNK = 10
 
     rename_markdown_to_md(SOURCE_FOLDER)
