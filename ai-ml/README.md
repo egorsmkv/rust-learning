@@ -11,6 +11,7 @@ Inference, Training:
 - [ ] Candle-vLLM
 - [ ] Mistral-rs
 - [ ] ollama-rs
+- [ ] https://github.com/tracel-ai/burn-lm/
 - [ ] ORT
 - [ ] Tract
 - [ ] linfra
