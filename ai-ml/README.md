@@ -34,6 +34,7 @@ Inference, Training:
 - [ ] https://github.com/EmbarkStudios/rust-gpu
 - [ ] https://github.com/araxnoid-code/ROTTA-rs
 - [ ] https://github.com/liquidos-ai/AutoAgents
+- [ ] https://github.com/MinishLab/model2vec-rs
 
 Gateway:
 
