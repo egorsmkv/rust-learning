@@ -14,7 +14,7 @@ Inference, Training:
 - [ ] https://github.com/tracel-ai/burn-lm/
 - [ ] ORT
 - [ ] Tract
-- [ ] linfra
+- [ ] [linfa](https://github.com/rust-ml/linfa)
 - [ ] Floneum
 - [ ] tch-rs
 - [ ] Rust-CUDA
@@ -84,7 +84,6 @@ Python & R:
 - [ ] https://github.com/RustPython/RustPython 
 - [ ] https://github.com/pola-rs/polars 
 - [ ] https://github.com/A2-ai/rv
-- [ ] 
 
 Other:
 
