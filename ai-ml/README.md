@@ -97,4 +97,5 @@ Other:
 - [ ] https://github.com/ThousandBirdsInc/chidori 
 - [ ] https://github.com/pisa-engine/kentro
 - [ ] https://github.com/ilya-zlobintsev/LACT
+- [ ] https://github.com/argmin-rs/argmin
 
