@@ -35,6 +35,7 @@ Inference, Training:
 - [ ] https://github.com/araxnoid-code/ROTTA-rs
 - [ ] https://github.com/liquidos-ai/AutoAgents
 - [ ] https://github.com/MinishLab/model2vec-rs
+- [ ] https://github.com/oxideai/mlx-rs
 
 Gateway:
 
