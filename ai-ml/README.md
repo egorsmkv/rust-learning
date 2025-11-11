@@ -37,6 +37,7 @@ Inference, Training:
 - [ ] https://github.com/MinishLab/model2vec-rs
 - [ ] https://github.com/oxideai/mlx-rs
 - [ ] https://github.com/smartcorelib/smartcore
+- [ ] https://github.com/hodu-rs/hodu
 
 Gateway:
 
